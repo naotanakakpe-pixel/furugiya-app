@@ -90,6 +90,16 @@
   .error { background: var(--red-bg); border: 1px solid #f5c6c2; border-radius: var(--radius-sm); padding: 13px; font-size: 13px; color: var(--red); line-height: 1.6; margin-top: 14px; display: none; white-space: pre-wrap; }
 
   .reset-btn { display: block; text-align: center; font-size: 13px; color: var(--text3); margin-top: 16px; cursor: pointer; text-decoration: underline; background: none; border: none; width: 100%; padding: 8px; }
+
+  .form-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 14px; }
+  .form-card .card-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; font-weight: 600; }
+  .form-row { margin-bottom: 10px; }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-row label { display: block; font-size: 11px; color: var(--text3); margin-bottom: 4px; letter-spacing: 0.3px; }
+  .form-row input, .form-row select { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); outline: none; -webkit-appearance: none; }
+  .form-row input:focus, .form-row select:focus { border-color: var(--accent); }
+  .form-row input::placeholder { color: var(--text3); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 </style>
 </head>
 <body>
@@ -107,6 +117,36 @@
     <div class="upload-icon">📷</div>
     <p>写真を撮るか選ぶ</p>
     <span>古着の写真をアップロード</span>
+  </div>
+
+  <div class="form-card" id="searchForm" style="display:none">
+    <div class="card-label">検索キーワードを追加（任意）</div>
+    <div class="form-row">
+      <label>ブランド名</label>
+      <input type="text" id="inputBrand" placeholder="例: Levi's、Patagonia、不明">
+    </div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label>サイズ</label>
+        <input type="text" id="inputSize" placeholder="例: M、W28、L">
+      </div>
+      <div class="form-row">
+        <label>年代</label>
+        <select id="inputEra">
+          <option value="">不明</option>
+          <option value="60s">60s</option>
+          <option value="70s">70s</option>
+          <option value="80s">80s</option>
+          <option value="90s">90s</option>
+          <option value="00s">00s</option>
+          <option value="10s">10s</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>その他キーワード</label>
+      <input type="text" id="inputExtra" placeholder="例: ヴィンテージ、アメカジ、USA製">
+    </div>
   </div>
 
   <button class="btn-main" id="analyzeBtn" onclick="analyze()" disabled>🔍 相場を調べる</button>
@@ -159,6 +199,7 @@ function handleFile(e) {
     img.src = dataUrl;
     img.style.display = 'block';
     document.getElementById('uploadWrap').style.display = 'none';
+    document.getElementById('searchForm').style.display = 'block';
     document.getElementById('analyzeBtn').disabled = false;
     document.getElementById('resultArea').style.display = 'none';
     document.getElementById('errorBox').style.display = 'none';
@@ -183,6 +224,7 @@ function resetApp() {
   imageMediaType = null;
   document.getElementById('previewImg').style.display = 'none';
   document.getElementById('uploadWrap').style.display = 'block';
+  document.getElementById('searchForm').style.display = 'none';
   document.getElementById('fileInput').value = '';
   document.getElementById('analyzeBtn').disabled = true;
   document.getElementById('resultArea').style.display = 'none';
@@ -201,7 +243,16 @@ async function analyze() {
     const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64, mediaType: imageMediaType })
+      body: JSON.stringify({
+        imageBase64,
+        mediaType: imageMediaType,
+        hints: {
+          brand: document.getElementById('inputBrand').value.trim(),
+          size: document.getElementById('inputSize').value.trim(),
+          era: document.getElementById('inputEra').value,
+          extra: document.getElementById('inputExtra').value.trim()
+        }
+      })
     });
     if (!res.ok) {
       const err = await res.json();
