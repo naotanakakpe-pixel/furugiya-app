@@ -5,8 +5,17 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { imageBase64, mediaType } = req.body;
+  const { imageBase64, mediaType, hints = {} } = req.body;
   if (!imageBase64 || !mediaType) return res.status(400).json({ error: 'Missing image data' });
+
+  const hintsText = [
+    hints.brand ? `ブランド：${hints.brand}` : '',
+    hints.size ? `サイズ：${hints.size}` : '',
+    hints.era ? `年代：${hints.era}` : '',
+    hints.extra ? `その他：${hints.extra}` : ''
+  ].filter(Boolean).join('、');
+
+  const hintsPrompt = hintsText ? `\n\n補足情報（ユーザーが入力）：${hintsText}。これを優先的に参考にしてください。` : '';
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -28,7 +37,7 @@ export default async function handler(req, res) {
             },
             {
               type: 'text',
-              text: `この古着の画像を分析して、JSONのみで回答してください。マークダウンや余分なテキストは不要です。
+              text: `この古着の画像を分析して、JSONのみで回答してください。マークダウンや余分なテキストは不要です。${hintsPrompt}
 
 {
   "brand": "ブランド名（例: Levi's）。不明なら「不明」",
