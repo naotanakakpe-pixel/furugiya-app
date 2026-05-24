@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="古着リサーチ">
+<title>古着リサーチ</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: #e0dbd3;
+    --text: #1a1814;
+    --text2: #6b6560;
+    --text3: #9e9790;
+    --accent: #1a1814;
+    --green: #2d6a4f;
+    --green-bg: #e8f5ee;
+    --red: #c0392b;
+    --red-bg: #fdf0ee;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  body {
+    font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 20px 16px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  .header p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+  #previewImg { width: 100%; max-height: 280px; object-fit: cover; border-radius: var(--radius); margin-bottom: 14px; display: none; }
+
+  .upload-wrap { background: var(--surface); border-radius: var(--radius); border: 2px dashed var(--border); padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 14px; position: relative; }
+  .upload-wrap:active { border-color: var(--accent); background: var(--surface2); }
+  .upload-wrap input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 44px; margin-bottom: 12px; }
+  .upload-wrap p { font-size: 16px; font-weight: 500; color: var(--text); }
+  .upload-wrap span { font-size: 12px; color: var(--text3); margin-top: 6px; display: block; }
+
+  .btn-main { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  .btn-main:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-main:not(:disabled):active { opacity: 0.8; }
+
+  .loading { text-align: center; padding: 36px; display: none; }
+  .spinner { width: 36px; height: 36px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p { font-size: 14px; color: var(--text2); }
+
+  .result { display: none; margin-top: 16px; }
+  .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
+  .card-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; font-weight: 600; }
+  .item-name { font-size: 17px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .item-meta { font-size: 13px; color: var(--text2); margin-top: 5px; line-height: 1.5; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .tag { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+
+  .price-table { border: 0.5px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; margin-top: 10px; }
+  .price-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 12px; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .price-row:last-child { border-bottom: none; }
+  .price-row.highlight { background: #eaf2fb; }
+  .price-name { color: var(--text2); flex: 1; }
+  .price-row.highlight .price-name { color: #1a5276; font-weight: 500; }
+  .price-val { font-weight: 600; color: var(--text); white-space: nowrap; margin-left: 8px; }
+  .price-row.highlight .price-val { color: #1a5276; }
+
+  .advice { background: var(--green-bg); border-radius: var(--radius-sm); padding: 13px; font-size: 13px; color: var(--green); line-height: 1.7; }
+  .title-example { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; font-size: 12px; color: var(--text2); line-height: 1.6; margin-top: 10px; }
+  .title-example strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .btn-link { display: block; width: 100%; padding: 14px; text-align: center; border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 14px; font-weight: 500; color: var(--text); text-decoration: none; background: var(--surface); margin-bottom: 10px; transition: background 0.15s; }
+  .btn-link:active { background: var(--surface2); }
+
+  .error { background: var(--red-bg); border: 1px solid #f5c6c2; border-radius: var(--radius-sm); padding: 13px; font-size: 13px; color: var(--red); line-height: 1.6; margin-top: 14px; display: none; white-space: pre-wrap; }
+
+  .reset-btn { display: block; text-align: center; font-size: 13px; color: var(--text3); margin-top: 16px; cursor: pointer; text-decoration: underline; background: none; border: none; width: 100%; padding: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>👕 古着リサーチ</h1>
+  <p>写真から商品を分析して相場を調べる</p>
+</div>
+
+<div class="container">
+  <img id="previewImg" alt="プレビュー">
+
+  <div class="upload-wrap" id="uploadWrap">
+    <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handleFile(event)">
+    <div class="upload-icon">📷</div>
+    <p>写真を撮るか選ぶ</p>
+    <span>古着の写真をアップロード</span>
+  </div>
+
+  <button class="btn-main" id="analyzeBtn" onclick="analyze()" disabled>🔍 相場を調べる</button>
+  <div class="error" id="errorBox"></div>
+
+  <div class="loading" id="loadingArea">
+    <div class="spinner"></div>
+    <p id="loadingMsg">AIが画像を分析中...</p>
+  </div>
+
+  <div class="result" id="resultArea">
+    <div class="card">
+      <div class="card-label">商品分析</div>
+      <div class="item-name" id="itemName"></div>
+      <div class="item-meta" id="itemMeta"></div>
+      <div class="tags" id="tagsArea"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">フリマ 価格相場</div>
+      <div class="price-table" id="priceTable"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">出品アドバイス</div>
+      <div class="advice" id="adviceBox"></div>
+      <div class="title-example" id="titleExample"></div>
+    </div>
+
+    <a class="btn-link" id="mercariLink" href="#" target="_blank">📦 メルカリで売れた価格を見る ↗</a>
+    <a class="btn-link" id="yahooLink" href="#" target="_blank">🔨 ヤフオクの落札結果を見る ↗</a>
+
+    <button class="reset-btn" onclick="resetApp()">別の写真を調べる</button>
+  </div>
+</div>
+
+<script>
+let imageBase64 = null;
+let imageMediaType = null;
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    imageBase64 = dataUrl.split(',')[1];
+    imageMediaType = file.type || 'image/jpeg';
+    const img = document.getElementById('previewImg');
+    img.src = dataUrl;
+    img.style.display = 'block';
+    document.getElementById('uploadWrap').style.display = 'none';
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('resultArea').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function setLoading(show, msg) {
+  document.getElementById('loadingArea').style.display = show ? 'block' : 'none';
+  if (msg) document.getElementById('loadingMsg').textContent = msg;
+  document.getElementById('analyzeBtn').disabled = show;
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function resetApp() {
+  imageBase64 = null;
+  imageMediaType = null;
+  document.getElementById('previewImg').style.display = 'none';
+  document.getElementById('uploadWrap').style.display = 'block';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('resultArea').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+async function analyze() {
+  if (!imageBase64) { showError('写真を選んでください。'); return; }
+
+  document.getElementById('resultArea').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+  setLoading(true, '👁 AIが画像を分析中...');
+
+  let item;
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64, mediaType: imageMediaType })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'サーバーエラー');
+    }
+    item = await res.json();
+  } catch(e) {
+    setLoading(false);
+    showError('エラー: ' + e.message);
+    return;
+  }
+
+  setLoading(false);
+
+  // 商品情報
+  document.getElementById('itemName').textContent = `${item.brand}　${item.item_type}`;
+  document.getElementById('itemMeta').textContent =
+    `${item.color}　｜　状態: ${item.condition}　｜　${item.era}`;
+  document.getElementById('tagsArea').innerHTML =
+    (item.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+
+  // 価格表（AIのアドバイスをもとに生成）
+  const brand = item.brand;
+  const isLevis = brand && brand.toLowerCase().includes('levi');
+  const isKnown = brand && brand !== '不明';
+
+  let priceRows = '';
+  if (isLevis) {
+    priceRows = `
+      <div class="price-row"><span class="price-name">美品・色落ち少なめ</span><span class="price-val">¥5,000〜8,000</span></div>
+      <div class="price-row highlight"><span class="price-name">この商品の推定レンジ ←</span><span class="price-val">¥3,500〜5,500</span></div>
+      <div class="price-row"><span class="price-name">使用感・色あせあり</span><span class="price-val">¥1,500〜3,000</span></div>`;
+  } else if (isKnown) {
+    priceRows = `
+      <div class="price-row"><span class="price-name">美品</span><span class="price-val">¥3,000〜6,000</span></div>
+      <div class="price-row highlight"><span class="price-name">この商品の推定レンジ ←</span><span class="price-val">¥2,000〜4,000</span></div>
+      <div class="price-row"><span class="price-name">使用感あり</span><span class="price-val">¥800〜2,000</span></div>`;
+  } else {
+    priceRows = `
+      <div class="price-row"><span class="price-name">状態良好</span><span class="price-val">¥1,500〜3,000</span></div>
+      <div class="price-row highlight"><span class="price-name">この商品の推定レンジ ←</span><span class="price-val">¥1,000〜2,500</span></div>
+      <div class="price-row"><span class="price-name">使用感あり</span><span class="price-val">¥500〜1,200</span></div>`;
+  }
+  document.getElementById('priceTable').innerHTML = priceRows;
+
+  // アドバイス
+  document.getElementById('adviceBox').textContent = item.advice || '';
+  if (item.title_example) {
+    document.getElementById('titleExample').innerHTML =
+      `<strong>タイトル例</strong>${item.title_example}`;
+  }
+
+  // 検索リンク
+  const mQ = encodeURIComponent(item.search_mercari || item.search_ja);
+  const yQ = encodeURIComponent(item.search_ja);
+  document.getElementById('mercariLink').href =
+    `https://jp.mercari.com/search?keyword=${mQ}&status=sold_out`;
+  document.getElementById('yahooLink').href =
+    `https://auctions.yahoo.co.jp/closedsearch/closedsearch/${yQ}/0/`;
+
+  document.getElementById('resultArea').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
